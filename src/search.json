@@ -230,4 +230,15 @@
       }],
       "image_path": "nika.jpg"
     }
+    {
+      "item_id": "nika4",
+      "main_image_id": "nika",
+      "product_type": [{"value": "CHAIR"}],
+      "3dmodel_id": "nika3.glb",
+      "item_name": [{
+        "language_tag": "en_US",
+        "value": "Nika Chair 3"
+      }],
+      "image_path": "nika.jpg"
+    }
 ]
