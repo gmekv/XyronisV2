@@ -12,5 +12,5 @@ export const globals = {
 	ratk: undefined,
 	playerHead: undefined,
 	controllers: undefined,
-	currentMode: 'furniture'
+	currentMode: 'measurement'
 };
