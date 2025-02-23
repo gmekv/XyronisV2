@@ -35,6 +35,8 @@ export class UIPanelSystem extends System {
             padding: 0.6,
             gap: 0.5,
         });
+        this._root.visible = globals.currentMode === 'furniture';
+
         console.log('Root created, adding to scene');
         scene.add(this._panelAnchor);
         this._panelAnchor.add(this._root);
