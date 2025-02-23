@@ -12,7 +12,7 @@ import { ARButton, RealityAccelerator } from 'ratk';
 import { Clock } from 'three';
 import { FurnitureSystem } from './furniture';
 import { PlayerSystem } from './player';
-import { UIPanelSystem } from './panel';
+// import { UIPanelSystem } from './panel';
 import { World } from 'elics';
 import { globals } from './global';
 import { setupScene } from './scene';
@@ -35,7 +35,7 @@ globals.scene.add(ratk.root);
 world
 	.registerSystem(PlayerSystem)
 	.registerSystem(FurnitureSystem)
-	.registerSystem(UIPanelSystem);
+	// .registerSystem(UIPanelSystem);
 
 const arButton = document.getElementById('ar-button');
 const webLaunchButton = document.getElementById('web-launch-button');
