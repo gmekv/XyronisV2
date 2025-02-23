@@ -9380,9 +9380,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./global */ "./src/global.js");
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
  */
 
 
@@ -9395,242 +9392,233 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class FurnitureSystem extends elics__WEBPACK_IMPORTED_MODULE_1__.System {
-	init() {
-		this.raycaster = new three__WEBPACK_IMPORTED_MODULE_4__.Raycaster();
-		const manager = new three__WEBPACK_IMPORTED_MODULE_4__.LoadingManager();
-		const DRACO_LOADER = new three_examples_jsm_loaders_DRACOLoader_js__WEBPACK_IMPORTED_MODULE_5__.DRACOLoader(this.manager).setDecoderPath(
-			`vendor/draco/gltf/`,
-		);
-		const KTX2_LOADER = new three_examples_jsm_loaders_KTX2Loader_js__WEBPACK_IMPORTED_MODULE_6__.KTX2Loader(this.manager).setTranscoderPath(
-			`vendor/basis/`,
-		);
-		const gltfLoader = new three_examples_jsm_loaders_GLTFLoader_js__WEBPACK_IMPORTED_MODULE_7__.GLTFLoader(manager)
-			.setCrossOrigin('anonymous')
-			.setDRACOLoader(DRACO_LOADER)
-			.setKTX2Loader(KTX2_LOADER.detectSupport(_global__WEBPACK_IMPORTED_MODULE_3__.globals.renderer));
-		this._gltfLoader = gltfLoader;
-		__webpack_require__.e(/*! import() */ "vendors-node_modules_dimforge_rapier3d_rapier_js").then(__webpack_require__.bind(__webpack_require__, /*! @dimforge/rapier3d */ "./node_modules/@dimforge/rapier3d/rapier.js")).then((RAPIER) => {
-			this.RAPIER = RAPIER;
-			// Use the RAPIER module here.
-			let gravity = { x: 0.0, y: -9.81, z: 0.0 };
-			let world = new RAPIER.World(gravity);
+    init() {
+        this.raycaster = new three__WEBPACK_IMPORTED_MODULE_4__.Raycaster();
+        const manager = new three__WEBPACK_IMPORTED_MODULE_4__.LoadingManager();
+        const DRACO_LOADER = new three_examples_jsm_loaders_DRACOLoader_js__WEBPACK_IMPORTED_MODULE_5__.DRACOLoader(this.manager).setDecoderPath(
+            `vendor/draco/gltf/`,
+        );
+        const KTX2_LOADER = new three_examples_jsm_loaders_KTX2Loader_js__WEBPACK_IMPORTED_MODULE_6__.KTX2Loader(this.manager).setTranscoderPath(
+            `vendor/basis/`,
+        );
+        const gltfLoader = new three_examples_jsm_loaders_GLTFLoader_js__WEBPACK_IMPORTED_MODULE_7__.GLTFLoader(manager)
+            .setCrossOrigin('anonymous')
+            .setDRACOLoader(DRACO_LOADER)
+            .setKTX2Loader(KTX2_LOADER.detectSupport(_global__WEBPACK_IMPORTED_MODULE_3__.globals.renderer));
+        this._gltfLoader = gltfLoader;
+        __webpack_require__.e(/*! import() */ "vendors-node_modules_dimforge_rapier3d_rapier_js").then(__webpack_require__.bind(__webpack_require__, /*! @dimforge/rapier3d */ "./node_modules/@dimforge/rapier3d/rapier.js")).then((RAPIER) => {
+            this.RAPIER = RAPIER;
+            let gravity = { x: 0.0, y: -9.81, z: 0.0 };
+            let world = new RAPIER.World(gravity);
 
-			// Create the ground
-			let groundColliderDesc = RAPIER.ColliderDesc.cuboid(
-				10.0,
-				0,
-				10.0,
-			).setFriction(0.5);
-			this.floorCollider = world.createCollider(groundColliderDesc);
+            let groundColliderDesc = RAPIER.ColliderDesc.cuboid(
+                10.0,
+                0,
+                10.0,
+            ).setFriction(0.5);
+            this.floorCollider = world.createCollider(groundColliderDesc);
 
-			// Create a dynamic rigid-body.
-			let rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
-				.setTranslation(0.0, 3.0, 0.0)
-				.setAngularDamping(1)
-				.lockRotations();
-			let rigidBody = world.createRigidBody(rigidBodyDesc);
-			rigidBody.setEnabledRotations(false, true, false);
+            let rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
+                .setTranslation(0.0, 3.0, 0.0)
+                .setAngularDamping(1)
+                .lockRotations();
+            let rigidBody = world.createRigidBody(rigidBodyDesc);
+            rigidBody.setEnabledRotations(false, true, false);
 
-			// Create a cuboid collider attached to the dynamic rigidBody.
-			let colliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5).setFriction(
-				0,
-			);
-			world.createCollider(colliderDesc, rigidBody);
+            let colliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5).setFriction(
+                0,
+            );
+            world.createCollider(colliderDesc, rigidBody);
 
-			this.rapierWorld = world;
-			this.rigidBody = rigidBody;
+            this.rapierWorld = world;
+            this.rigidBody = rigidBody;
+        });
+        this._furnitureLoading = false;
+    }
 
-			window.setTarget = (x, y, z) => {
-				this.target = new three__WEBPACK_IMPORTED_MODULE_4__.Vector3(x, y, z);
-			};
-		});
-		this._furnitureLoading = false;
-	}
+    update(delta) {
+        if (!this.RAPIER) return;
 
-	update(delta) {
-		if (!this.RAPIER) return;
+        // Mode-based visibility control
+        if (_global__WEBPACK_IMPORTED_MODULE_3__.globals.currentMode !== 'furniture') {
+            if (this.cube) {
+                this.cube.visible = false;
+            }
+            if (this.targetMarker) {
+                this.targetMarker.visible = false;
+            }
+            return;
+        }
 
-		if (!this.cube) {
-			const { ratk, scene } = _global__WEBPACK_IMPORTED_MODULE_3__.globals;
-			this.cube = new three__WEBPACK_IMPORTED_MODULE_4__.Group();
-			const furnitureMarker = (0,_marker__WEBPACK_IMPORTED_MODULE_2__.createFurnitureMarker)();
-			furnitureMarker.position.set(0, -0.5, 0);
-			this.cube.add(furnitureMarker);
-			scene.add(this.cube);
+        // Show placement preview when in furniture mode
+        if (this.cube) {
+            this.cube.visible = true;
+        }
+        if (this.targetMarker) {
+            this.targetMarker.visible = true;
+        }
 
-			const floorGeometry = new three__WEBPACK_IMPORTED_MODULE_4__.PlaneGeometry(1000, 1000);
-			floorGeometry.rotateX(-Math.PI / 2);
-			this.floor = new three__WEBPACK_IMPORTED_MODULE_4__.Mesh(
-				floorGeometry,
-				new three__WEBPACK_IMPORTED_MODULE_4__.ShadowMaterial({
-					opacity: 0.75,
-				}),
-			);
-			this.floor.receiveShadow = true;
-			scene.add(this.floor);
+        if (!this.cube) {
+            const { ratk, scene } = _global__WEBPACK_IMPORTED_MODULE_3__.globals;
+            this.cube = new three__WEBPACK_IMPORTED_MODULE_4__.Group();
+            const furnitureMarker = (0,_marker__WEBPACK_IMPORTED_MODULE_2__.createFurnitureMarker)();
+            furnitureMarker.position.set(0, -0.5, 0);
+            this.cube.add(furnitureMarker);
+            scene.add(this.cube);
 
-			this.targetMarker = new three__WEBPACK_IMPORTED_MODULE_4__.Mesh(
-				new three__WEBPACK_IMPORTED_MODULE_4__.SphereGeometry(0.05, 32, 16),
-				new three__WEBPACK_IMPORTED_MODULE_4__.MeshBasicMaterial({
-					color: 0xffffff,
-					transparent: true,
-					opacity: 0.5,
-				}),
-			);
-			scene.add(this.targetMarker);
+            const floorGeometry = new three__WEBPACK_IMPORTED_MODULE_4__.PlaneGeometry(1000, 1000);
+            floorGeometry.rotateX(-Math.PI / 2);
+            this.floor = new three__WEBPACK_IMPORTED_MODULE_4__.Mesh(
+                floorGeometry,
+                new three__WEBPACK_IMPORTED_MODULE_4__.ShadowMaterial({
+                    opacity: 0.75,
+                }),
+            );
+            this.floor.receiveShadow = true;
+            scene.add(this.floor);
 
-			/**
-			 *
-			 * @param {import('ratk').Plane} plane
-			 */
-			ratk.onPlaneAdded = (plane) => {
-				plane.visible = false;
-				if (plane.orientation === 'vertical') {
-					const wallColliderDesc = this.RAPIER.ColliderDesc.cuboid(
-						plane.boundingRectangleWidth,
-						0,
-						plane.boundingRectangleHeight,
-					)
-						.setTranslation(...plane.position.toArray())
-						.setRotation(plane.quaternion);
-					this.rapierWorld.createCollider(wallColliderDesc);
-				} else if (plane.semanticLabel === 'floor') {
-					this.raycaster.set(new three__WEBPACK_IMPORTED_MODULE_4__.Vector3(0, 2, 0), new three__WEBPACK_IMPORTED_MODULE_4__.Vector3(0, -1, 0));
-					const intersect = this.raycaster.intersectObject(plane.planeMesh)[0]
-						?.point;
-					if (!intersect) return;
-					this.rapierWorld.removeCollider(this.floorCollider);
-					let updatedColliderDesc = this.RAPIER.ColliderDesc.cuboid(
-						10.0,
-						0,
-						10.0,
-					)
-						.setTranslation(0, intersect.y, 0) // Set new position
-						.setFriction(0.5); // Set new friction
-					this.floorCollider =
-						this.rapierWorld.createCollider(updatedColliderDesc);
-					this.floor.position.y = intersect.y;
-					this.rigidBody.setTranslation({ x: 0, y: intersect.y + 3, z: 0 });
-				}
-			};
-		}
+            this.targetMarker = new three__WEBPACK_IMPORTED_MODULE_4__.Mesh(
+                new three__WEBPACK_IMPORTED_MODULE_4__.SphereGeometry(0.05, 32, 16),
+                new three__WEBPACK_IMPORTED_MODULE_4__.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.5,
+                }),
+            );
+            scene.add(this.targetMarker);
 
-		if (_global__WEBPACK_IMPORTED_MODULE_3__.globals.furnitureToSpawn) {
-			if (!this.cube.userData.furnitureModel && !this._furnitureLoading) {
-				this._furnitureLoading = true;
-				this._gltfLoader.load('assets/' + _global__WEBPACK_IMPORTED_MODULE_3__.globals.furnitureToSpawn, (gltf) => {
-					const model = gltf.scene.children[0];
-					model.position.y -= 0.5;
-					this.cube.add(model);
-					this.cube.userData.furnitureModel = model;
-					this._furnitureLoading = false;
-				});
-			}
-			_global__WEBPACK_IMPORTED_MODULE_3__.globals.furnitureToSpawn = null;
-		}
+            ratk.onPlaneAdded = (plane) => {
+                plane.visible = false;
+                if (plane.orientation === 'vertical') {
+                    const wallColliderDesc = this.RAPIER.ColliderDesc.cuboid(
+                        plane.boundingRectangleWidth,
+                        0,
+                        plane.boundingRectangleHeight,
+                    )
+                        .setTranslation(...plane.position.toArray())
+                        .setRotation(plane.quaternion);
+                    this.rapierWorld.createCollider(wallColliderDesc);
+                } else if (plane.semanticLabel === 'floor') {
+                    this.raycaster.set(new three__WEBPACK_IMPORTED_MODULE_4__.Vector3(0, 2, 0), new three__WEBPACK_IMPORTED_MODULE_4__.Vector3(0, -1, 0));
+                    const intersect = this.raycaster.intersectObject(plane.planeMesh)[0]
+                        ?.point;
+                    if (!intersect) return;
+                    this.rapierWorld.removeCollider(this.floorCollider);
+                    let updatedColliderDesc = this.RAPIER.ColliderDesc.cuboid(
+                        10.0,
+                        0,
+                        10.0,
+                    )
+                        .setTranslation(0, intersect.y, 0)
+                        .setFriction(0.5);
+                    this.floorCollider =
+                        this.rapierWorld.createCollider(updatedColliderDesc);
+                    this.floor.position.y = intersect.y;
+                    this.rigidBody.setTranslation({ x: 0, y: intersect.y + 3, z: 0 });
+                }
+            };
+        }
 
-		const controller = _global__WEBPACK_IMPORTED_MODULE_3__.globals.controllers['right'];
+        const controller = _global__WEBPACK_IMPORTED_MODULE_3__.globals.controllers['right'];
 
-		if (!controller?.targetRaySpace) {
-			this.targetMarker.visible = false;
-			return;
-		}
+        if (!controller?.targetRaySpace) {
+            this.targetMarker.visible = false;
+            return;
+        }
 
-		if (controller?.gamepadWrapper) {
-			if (controller.gamepadWrapper.getButtonDown(gamepad_wrapper__WEBPACK_IMPORTED_MODULE_0__.XR_BUTTONS.TRIGGER)) {
-				this.finalizeFurniturePosition();
-			}
-		}
+        if (controller?.gamepadWrapper) {
+            if (controller.gamepadWrapper.getButtonDown(gamepad_wrapper__WEBPACK_IMPORTED_MODULE_0__.XR_BUTTONS.TRIGGER)) {
+                this.finalizeFurniturePosition();
+            }
+        }
 
-		this.raycaster.set(
-			controller.targetRaySpace.position,
-			controller.targetRaySpace.getWorldDirection(new three__WEBPACK_IMPORTED_MODULE_4__.Vector3()).negate(),
-		);
-		const target = this.raycaster.intersectObject(this.floor, false)[0]?.point;
+        this.raycaster.set(
+            controller.targetRaySpace.position,
+            controller.targetRaySpace.getWorldDirection(new three__WEBPACK_IMPORTED_MODULE_4__.Vector3()).negate(),
+        );
+        const target = this.raycaster.intersectObject(this.floor, false)[0]?.point;
 
-		if (target) {
-			this.targetMarker.visible = true;
-			this.targetMarker.position.copy(target);
-			// Get the current position of the rigid body
-			let position = new three__WEBPACK_IMPORTED_MODULE_4__.Vector3().copy(this.rigidBody.translation());
-			// Calculate the direction vector
-			let dir = new three__WEBPACK_IMPORTED_MODULE_4__.Vector3().subVectors(target, position);
-			// Check if the rigid body has reached the target
-			if (dir.length() < 0.01) {
-				// The rigid body is close enough to the target, so we can stop it
-				this.rigidBody.setLinvel(new this.RAPIER.Vector3(0, 0, 0), true);
-			} else {
-				// Normalize the direction vector and scale it by the speed
-				let velocity = dir.normalize().multiplyScalar(0.1);
-				// Calculate the impulse
-				let impulse = velocity.multiplyScalar(this.rigidBody.mass());
-				// Apply the impulse
-				this.rigidBody.applyImpulse(impulse, true);
-			}
-		} else {
-			this.targetMarker.visible = false;
-		}
+        if (target) {
+            this.targetMarker.visible = true;
+            this.targetMarker.position.copy(target);
+            let position = new three__WEBPACK_IMPORTED_MODULE_4__.Vector3().copy(this.rigidBody.translation());
+            let dir = new three__WEBPACK_IMPORTED_MODULE_4__.Vector3().subVectors(target, position);
+            if (dir.length() < 0.01) {
+                this.rigidBody.setLinvel(new this.RAPIER.Vector3(0, 0, 0), true);
+            } else {
+                let velocity = dir.normalize().multiplyScalar(0.1);
+                let impulse = velocity.multiplyScalar(this.rigidBody.mass());
+                this.rigidBody.applyImpulse(impulse, true);
+            }
+        } else {
+            this.targetMarker.visible = false;
+        }
 
-		const thumbstickValue = controller.gamepadWrapper.getAxis(
-			gamepad_wrapper__WEBPACK_IMPORTED_MODULE_0__.AXES.XR_STANDARD.THUMBSTICK_X,
-		);
+        const thumbstickValue = controller.gamepadWrapper.getAxis(
+            gamepad_wrapper__WEBPACK_IMPORTED_MODULE_0__.AXES.XR_STANDARD.THUMBSTICK_X,
+        );
 
-		// Maximum rotation speed
-		let maxRotationSpeed = -0.06; // Adjust this value to your needs
-		// Thumbstick value
-		// Calculate the torque impulse
-		let torqueImpulse = new this.RAPIER.Vector3(
-			0,
-			thumbstickValue * maxRotationSpeed,
-			0,
-		);
-		// Apply the torque impulse
-		this.rigidBody.applyTorqueImpulse(torqueImpulse, true);
+        let maxRotationSpeed = -0.06;
+        let torqueImpulse = new this.RAPIER.Vector3(
+            0,
+            thumbstickValue * maxRotationSpeed,
+            0,
+        );
+        this.rigidBody.applyTorqueImpulse(torqueImpulse, true);
 
-		this.rapierWorld.timestep = delta;
-		this.rapierWorld.step();
+        this.rapierWorld.timestep = delta;
+        this.rapierWorld.step();
 
-		this.cube.position.copy(this.rigidBody.translation());
-		this.cube.quaternion.copy(this.rigidBody.rotation());
+        this.cube.position.copy(this.rigidBody.translation());
+        this.cube.quaternion.copy(this.rigidBody.rotation());
 
-		if (this.cube.position.y < -5) {
-			this.rigidBody.setTranslation({ x: 0, y: 3, z: 0 });
-		}
-	}
+        if (this.cube.position.y < -5) {
+            this.rigidBody.setTranslation({ x: 0, y: 3, z: 0 });
+        }
 
-	finalizeFurniturePosition() {
-		// Detach the furniture model from the cube
-		const furnitureModel = this.cube.userData.furnitureModel;
-		if (furnitureModel) {
-			_global__WEBPACK_IMPORTED_MODULE_3__.globals.scene.attach(furnitureModel);
-			furnitureModel.castShadow = true;
-			this.cube.userData.furnitureModel = null;
-		} else {
-			return;
-		}
+        if (_global__WEBPACK_IMPORTED_MODULE_3__.globals.furnitureToSpawn) {
+            if (!this.cube.userData.furnitureModel && !this._furnitureLoading) {
+                this._furnitureLoading = true;
+                this._gltfLoader.load('assets/' + _global__WEBPACK_IMPORTED_MODULE_3__.globals.furnitureToSpawn, (gltf) => {
+                    const model = gltf.scene.children[0];
+                    model.position.y -= 0.5;
+                    this.cube.add(model);
+                    this.cube.userData.furnitureModel = model;
+                    this._furnitureLoading = false;
+                });
+            }
+            _global__WEBPACK_IMPORTED_MODULE_3__.globals.furnitureToSpawn = null;
+        }
+    }
 
-		// Create a new fixed rigid body for the furniture at its current position
-		const translation = this.rigidBody.translation();
-		const fixedRigidBodyDesc = this.RAPIER.RigidBodyDesc.fixed()
-			.setTranslation(translation.x, translation.y, translation.z)
-			.setRotation(this.rigidBody.rotation());
-		const fixedRigidBody = this.rapierWorld.createRigidBody(fixedRigidBodyDesc);
+    finalizeFurniturePosition() {
+        const furnitureModel = this.cube.userData.furnitureModel;
+        if (furnitureModel) {
+            _global__WEBPACK_IMPORTED_MODULE_3__.globals.scene.attach(furnitureModel);
+            furnitureModel.castShadow = true;
+            this.cube.userData.furnitureModel = null;
+        } else {
+            return;
+        }
 
-		// Attach the furniture model to the new fixed rigid body
-		const colliderDesc = this.RAPIER.ColliderDesc.cuboid(
-			0.5,
-			0.5,
-			0.5,
-		).setFriction(0.5);
-		this.rapierWorld.createCollider(colliderDesc, fixedRigidBody);
+        const translation = this.rigidBody.translation();
+        const fixedRigidBodyDesc = this.RAPIER.RigidBodyDesc.fixed()
+            .setTranslation(translation.x, translation.y, translation.z)
+            .setRotation(this.rigidBody.rotation());
+        const fixedRigidBody = this.rapierWorld.createRigidBody(fixedRigidBodyDesc);
 
-		// Reset the cube's rigid body's position to its starting point
-		this.rigidBody.setTranslation(new this.RAPIER.Vector3(0.0, 3.0, 0.0), true);
-		this.rigidBody.setLinvel(new this.RAPIER.Vector3(0, 0, 0), true);
-		this.rigidBody.setAngvel(new this.RAPIER.Vector3(0, 0, 0), true);
-	}
+        const colliderDesc = this.RAPIER.ColliderDesc.cuboid(
+            0.5,
+            0.5,
+            0.5,
+        ).setFriction(0.5);
+        this.rapierWorld.createCollider(colliderDesc, fixedRigidBody);
+
+        this.rigidBody.setTranslation(new this.RAPIER.Vector3(0.0, 3.0, 0.0), true);
+        this.rigidBody.setLinvel(new this.RAPIER.Vector3(0, 0, 0), true);
+        this.rigidBody.setAngvel(new this.RAPIER.Vector3(0, 0, 0), true);
+    }
 }
-
 
 /***/ }),
 
@@ -9659,6 +9647,7 @@ const globals = {
 	ratk: undefined,
 	playerHead: undefined,
 	controllers: undefined,
+	currentMode: 'measurement'
 };
 
 
@@ -9812,207 +9801,6 @@ function createFurnitureMarker() {
 	});
 
 	return new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(geometry, material);
-}
-
-
-/***/ }),
-
-/***/ "./src/panel.js":
-/*!**********************!*\
-  !*** ./src/panel.js ***!
-  \**********************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   UIPanelSystem: () => (/* binding */ UIPanelSystem)
-/* harmony export */ });
-/* harmony import */ var _pmndrs_uikit__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @pmndrs/uikit */ "./node_modules/@pmndrs/uikit/dist/index.js");
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
-/* harmony import */ var elics__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! elics */ "./node_modules/elics/lib/index.js");
-/* harmony import */ var gamepad_wrapper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! gamepad-wrapper */ "./node_modules/gamepad-wrapper/lib/index.js");
-/* harmony import */ var _search_json__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./search.json */ "./src/search.json");
-/* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./global */ "./src/global.js");
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-
-
-
-
-
-
-
-
-const ITEM_PER_ROW = 4;
-const DIRECTIONS = {
-	Up: 'up',
-	Down: 'down',
-	Left: 'left',
-	Right: 'right',
-	None: 'none',
-};
-
-class UIPanelSystem extends elics__WEBPACK_IMPORTED_MODULE_1__.System {
-	init() {
-		const { camera, renderer, scene } = _global__WEBPACK_IMPORTED_MODULE_4__.globals;
-		this._raycaster = new three__WEBPACK_IMPORTED_MODULE_5__.Raycaster();
-		this._panelAnchor = new three__WEBPACK_IMPORTED_MODULE_5__.Group();
-		this._root = new _pmndrs_uikit__WEBPACK_IMPORTED_MODULE_0__.Root(camera, renderer, undefined, {
-			flexDirection: 'column',
-			justifyContent: 'space-evenly',
-			alignItems: 'flex-start',
-			backgroundColor: 'white',
-			borderRadius: 1.5,
-			backgroundOpacity: 0.7,
-			padding: 0.6,
-			gap: 0.5,
-		});
-		scene.add(this._panelAnchor);
-		this._panelAnchor.add(this._root);
-
-		this._selectionCoords = [0, 0];
-		this._itemGrid = [];
-		this._prevDirection = DIRECTIONS.None;
-
-		let rowContainer = null;
-		let gridRow = null;
-		_search_json__WEBPACK_IMPORTED_MODULE_3__.forEach((chair, i) => {
-			if (i % ITEM_PER_ROW === 0) {
-				rowContainer = new _pmndrs_uikit__WEBPACK_IMPORTED_MODULE_0__.Container({
-					flexDirection: 'row',
-					justifyContent: 'space-evenly',
-					alignItems: 'flex-start',
-					gap: 0.5,
-				});
-				this._root.add(rowContainer);
-				gridRow = [];
-				this._itemGrid.push(gridRow);
-			}
-
-			const itemImage = new _pmndrs_uikit__WEBPACK_IMPORTED_MODULE_0__.Image({
-				src: 'assets/' + chair.image_path,
-				width: 5,
-				minWidth: 5,
-				maxWidth: 5,
-				minHeight: 5,
-				height: 5,
-				maxHeight: 5,
-				objectFit: 'fill',
-				borderRadius: 1,
-				backgroundColor: 'white',
-				borderWidth: 0.25,
-				borderColor: 'white',
-			});
-			itemImage.userData.modelURL = chair['3dmodel_id'];
-			gridRow.push(itemImage);
-
-			const itemContainer = new _pmndrs_uikit__WEBPACK_IMPORTED_MODULE_0__.Container({
-				flexDirection: 'column',
-				justifyContent: 'center',
-				alignItems: 'center',
-			})
-				.add(itemImage)
-				.add(
-					new _pmndrs_uikit__WEBPACK_IMPORTED_MODULE_0__.Text(chair.item_id, {
-						fontSize: 0.7,
-						fontWeight: 'extra-bold',
-						color: 'black',
-						textAlign: 'center',
-					}),
-				);
-
-			rowContainer.add(itemContainer);
-		});
-		this._itemGrid[0][0].setStyle({
-			borderColor: 'black',
-		});
-	}
-
-	update(delta) {
-		const controller = _global__WEBPACK_IMPORTED_MODULE_4__.globals.controllers['left'];
-		if (controller) {
-			controller.targetRaySpace.getWorldPosition(this._panelAnchor.position);
-			this._panelAnchor.position.y += 0.1;
-			this._panelAnchor.lookAt(_global__WEBPACK_IMPORTED_MODULE_4__.globals.playerHead.position);
-
-			const gamepad = controller.gamepadWrapper;
-
-			if (gamepad?.get2DInputValue(gamepad_wrapper__WEBPACK_IMPORTED_MODULE_2__.XR_BUTTONS.THUMBSTICK) > 0.7) {
-				const angle = gamepad.get2DInputAngle(gamepad_wrapper__WEBPACK_IMPORTED_MODULE_2__.XR_BUTTONS.THUMBSTICK);
-				let direction = DIRECTIONS.None;
-				if (Math.abs(angle) < Math.PI / 6) {
-					direction = DIRECTIONS.Up;
-				} else if (Math.abs(angle) > (Math.PI / 6) * 5) {
-					direction = DIRECTIONS.Down;
-				} else if (
-					Math.abs(angle) > Math.PI / 3 &&
-					Math.abs(angle) < (Math.PI / 3) * 2
-				) {
-					if (angle > 0) {
-						direction = DIRECTIONS.Right;
-					} else {
-						direction = DIRECTIONS.Left;
-					}
-				}
-				if (
-					direction !== DIRECTIONS.None &&
-					direction !== this._prevDirection
-				) {
-					const [currentRow, currentCol] = this._selectionCoords;
-					let newCoords = [...this._selectionCoords];
-
-					switch (direction) {
-						case DIRECTIONS.Up:
-							newCoords[0] = currentRow - 1;
-							break;
-						case DIRECTIONS.Down:
-							newCoords[0] = currentRow + 1;
-							break;
-						case DIRECTIONS.Left:
-							newCoords[1] = currentCol - 1;
-							break;
-						case DIRECTIONS.Right:
-							newCoords[1] = currentCol + 1;
-							break;
-					}
-
-					// Check if the new coordinates are within the bounds of the grid
-					const [newRow, newCol] = newCoords;
-					if (
-						newRow >= 0 &&
-						newRow < this._itemGrid.length &&
-						newCol >= 0 &&
-						newCol < this._itemGrid[newRow].length
-					) {
-						// Update the selection coordinates if the move is valid
-						this._selectionCoords = newCoords;
-						this._itemGrid[currentRow][currentCol].setStyle({
-							borderColor: 'white',
-						});
-						this._itemGrid[newRow][newCol].setStyle({
-							borderColor: 'black',
-						});
-					}
-				}
-				this._prevDirection = direction;
-			} else {
-				this._prevDirection = DIRECTIONS.None;
-			}
-
-			if (gamepad.getButtonDown(gamepad_wrapper__WEBPACK_IMPORTED_MODULE_2__.XR_BUTTONS.TRIGGER)) {
-				const [currentRow, currentCol] = this._selectionCoords;
-				_global__WEBPACK_IMPORTED_MODULE_4__.globals.furnitureToSpawn =
-					this._itemGrid[currentRow][currentCol].userData.modelURL;
-			}
-		}
-		this._root.update(delta * 1000);
-	}
 }
 
 
@@ -87535,17 +87323,6 @@ function wrapAssembly(lib) {
 }
 //# sourceMappingURL=wrapAssembly.js.map
 
-/***/ }),
-
-/***/ "./src/search.json":
-/*!*************************!*\
-  !*** ./src/search.json ***!
-  \*************************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = /*#__PURE__*/JSON.parse('[{"item_id":"B0746KJVP2","main_image_id":"81Cam9nlaBL","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B0746KJVP2.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Rivet Charlotte Mid-Century Modern Upholstered Gold Accent Chair, 29\\"W, Natural"}],"image_path":"9b427ea0.jpg"},{"item_id":"B075X543WR","main_image_id":"A1qXzEnvbDL","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B075X543WR.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Stone & Beam Cameron Classic Oversized Arm Chair, 32\\"W, Indigo"}],"image_path":"5d8a547b.jpg"},{"item_id":"B07B7B244W","main_image_id":"71DNWOd-5bL","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B07B7B244W.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Rivet Allie Leather Industrial Mid-Century Dining Room Kitchen Chair, 33\\"H, Brown and Black"}],"image_path":"86bb70ad.jpg"},{"item_id":"B0853VY3JP","main_image_id":"91XcUlq2HiL","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B0853VY3JP.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Stone & Beam Elisabet Upholstered Swivel Chair, 33.5\\"W, Hemp"}],"image_path":"05711261.jpg"},{"item_id":"B071W5VD5C","main_image_id":"B1zcg3T8Y5S","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B071W5VD5C.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Rivet Hawthorne Mid-Century Tufted Modern Accent Chair, 35\\"W, Silver"}],"image_path":"ee0753f0.jpg"},{"item_id":"B072JG3WK1","main_image_id":"A1Y51zYw1GL","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B072JG3WK1.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Stone & Beam Ashbury Modern Exposed Wood Accent Chair, 29\\"W, Navy"}],"image_path":"618ee65c.jpg"},{"item_id":"B075X4WBQR","main_image_id":"91ctG7N0z4L","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B075X4WBQR.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Rivet Garfield Mid-Century Modern Top-Grain Leather Recliner Chair, 31\\"W, Aged Black"}],"image_path":"1b6797e0.jpg"},{"item_id":"B073G94FW8","main_image_id":"91Mu5lGWCYL","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B073G94FW8.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Rivet Farr Lotus Accent Chair, Canary"}],"image_path":"968a4fe5.jpg"},{"item_id":"B073G6GTKL","main_image_id":"A1pQlH33yML","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B073G6GTKL.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Stone & Beam Modern Sweeping Arm Accent Chair, 28\\"W, Emerald"}],"image_path":"d7088363.jpg"},{"item_id":"B075X33T21","main_image_id":"81r58Hroy8L","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B075X33T21.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Rivet Parks Mid-Century Modern Wingback Leather Accent Chair, 30.5\\"W, Aged Black"}],"image_path":"87b5de32.jpg"},{"item_id":"B07B4DBBPY","main_image_id":"91XVdEHCknL","product_type":[{"value":"CHAIR"}],"3dmodel_id":"B07B4DBBPY.glb","item_name":[{"language_tag":"en_US","value":"Amazon Brand – Rivet Frederick Mid-Century Modern Tufted Velvet Living Room Chair, 38\\"W, Forest Green"}],"image_path":"384830af.jpg"},{"item_id":"sofa","main_image_id":"sofa","product_type":[{"value":"SOFA"}],"3dmodel_id":"sillon.glb","item_name":[{"language_tag":"en_US","value":"Modern Living Room Sofa"}],"image_path":"sofa.jpg"},{"item_id":"nika","main_image_id":"nika","product_type":[{"value":"CHAIR"}],"3dmodel_id":"nika.glb","item_name":[{"language_tag":"en_US","value":"Nika Chair"}],"image_path":"nika.jpg"},{"item_id":"nika2","main_image_id":"nika","product_type":[{"value":"CHAIR"}],"3dmodel_id":"nika2.glb","item_name":[{"language_tag":"en_US","value":"Nika Chair 2"}],"image_path":"nika.jpg"},{"item_id":"nika3","main_image_id":"nika","product_type":[{"value":"CHAIR"}],"3dmodel_id":"nika3.glb","item_name":[{"language_tag":"en_US","value":"Nika Chair 3"}],"image_path":"nika.jpg"}]');
-
 /***/ })
 
 /******/ 	});
@@ -87952,13 +87729,12 @@ var __webpack_exports__ = {};
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _styles_index_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./styles/index.css */ "./src/styles/index.css");
 /* harmony import */ var ratk__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ratk */ "./node_modules/ratk/lib/index.js");
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
 /* harmony import */ var _furniture__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./furniture */ "./src/furniture.js");
 /* harmony import */ var _player__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./player */ "./src/player.js");
-/* harmony import */ var _panel__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./panel */ "./src/panel.js");
-/* harmony import */ var elics__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! elics */ "./node_modules/elics/lib/index.js");
-/* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./global */ "./src/global.js");
-/* harmony import */ var _scene__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./scene */ "./src/scene.js");
+/* harmony import */ var elics__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! elics */ "./node_modules/elics/lib/index.js");
+/* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./global */ "./src/global.js");
+/* harmony import */ var _scene__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./scene */ "./src/scene.js");
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
@@ -87973,35 +87749,35 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+// import { UIPanelSystem } from './panel';
 
 
 
 
+const world = new elics__WEBPACK_IMPORTED_MODULE_4__.World();
+(0,_scene__WEBPACK_IMPORTED_MODULE_6__.setupScene)();
+const ratk = new ratk__WEBPACK_IMPORTED_MODULE_1__.RealityAccelerator(_global__WEBPACK_IMPORTED_MODULE_5__.globals.renderer.xr);
 
-const world = new elics__WEBPACK_IMPORTED_MODULE_5__.World();
-(0,_scene__WEBPACK_IMPORTED_MODULE_7__.setupScene)();
-const ratk = new ratk__WEBPACK_IMPORTED_MODULE_1__.RealityAccelerator(_global__WEBPACK_IMPORTED_MODULE_6__.globals.renderer.xr);
-
-_global__WEBPACK_IMPORTED_MODULE_6__.globals.renderer.xr.addEventListener('sessionstart', () => {
+_global__WEBPACK_IMPORTED_MODULE_5__.globals.renderer.xr.addEventListener('sessionstart', () => {
 	setTimeout(() => {
 		if (ratk.planes.size == 0) {
-			_global__WEBPACK_IMPORTED_MODULE_6__.globals.renderer.xr.getSession().initiateRoomCapture();
+			_global__WEBPACK_IMPORTED_MODULE_5__.globals.renderer.xr.getSession().initiateRoomCapture();
 		}
 	}, 5000);
 });
 
-_global__WEBPACK_IMPORTED_MODULE_6__.globals.ratk = ratk;
-_global__WEBPACK_IMPORTED_MODULE_6__.globals.scene.add(ratk.root);
+_global__WEBPACK_IMPORTED_MODULE_5__.globals.ratk = ratk;
+_global__WEBPACK_IMPORTED_MODULE_5__.globals.scene.add(ratk.root);
 
 world
 	.registerSystem(_player__WEBPACK_IMPORTED_MODULE_3__.PlayerSystem)
 	.registerSystem(_furniture__WEBPACK_IMPORTED_MODULE_2__.FurnitureSystem)
-	.registerSystem(_panel__WEBPACK_IMPORTED_MODULE_4__.UIPanelSystem);
+	// .registerSystem(UIPanelSystem);
 
 const arButton = document.getElementById('ar-button');
 const webLaunchButton = document.getElementById('web-launch-button');
 webLaunchButton.style.display = 'none';
-ratk__WEBPACK_IMPORTED_MODULE_1__.ARButton.convertToARButton(arButton, _global__WEBPACK_IMPORTED_MODULE_6__.globals.renderer, {
+ratk__WEBPACK_IMPORTED_MODULE_1__.ARButton.convertToARButton(arButton, _global__WEBPACK_IMPORTED_MODULE_5__.globals.renderer, {
 	requiredFeatures: ['hit-test', 'plane-detection', 'anchors'],
 	optionalFeatures: ['local-floor', 'bounded-floor', 'layers'],
 	onUnsupported: () => {
@@ -88016,15 +87792,15 @@ webLaunchButton.onclick = () => {
 	);
 };
 
-const clock = new three__WEBPACK_IMPORTED_MODULE_8__.Clock();
-_global__WEBPACK_IMPORTED_MODULE_6__.globals.renderer.setAnimationLoop(function () {
+const clock = new three__WEBPACK_IMPORTED_MODULE_7__.Clock();
+_global__WEBPACK_IMPORTED_MODULE_5__.globals.renderer.setAnimationLoop(function () {
 	ratk.update();
 	world.update(clock.getDelta(), clock.getElapsedTime());
-	_global__WEBPACK_IMPORTED_MODULE_6__.globals.renderer.render(_global__WEBPACK_IMPORTED_MODULE_6__.globals.scene, _global__WEBPACK_IMPORTED_MODULE_6__.globals.camera);
+	_global__WEBPACK_IMPORTED_MODULE_5__.globals.renderer.render(_global__WEBPACK_IMPORTED_MODULE_5__.globals.scene, _global__WEBPACK_IMPORTED_MODULE_5__.globals.camera);
 });
 
-_global__WEBPACK_IMPORTED_MODULE_6__.globals.renderer.xr.addEventListener('sessionstart', () => {
-	const session = _global__WEBPACK_IMPORTED_MODULE_6__.globals.renderer.xr.getSession();
+_global__WEBPACK_IMPORTED_MODULE_5__.globals.renderer.xr.addEventListener('sessionstart', () => {
+	const session = _global__WEBPACK_IMPORTED_MODULE_5__.globals.renderer.xr.getSession();
 	console.log(session);
 	session.updateTargetFrameRate(72);
 });
