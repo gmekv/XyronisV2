@@ -104,7 +104,7 @@ export class UIPanelSystem extends System {
             const gamepad = controller.gamepadWrapper;
 
             // Mode switching with X button
-            if (gamepad?.getButtonClick(XR_BUTTONS.BUTTON_4)) {
+            if (gamepad?.getButtonClick(XR_BUTTONS.BUTTON_1)) {
                 globals.currentMode = globals.currentMode === 'furniture' ? 'measurement' : 'furniture';
                 this._root.visible = globals.currentMode === 'furniture';
                 console.log('Mode switched to:', globals.currentMode);
